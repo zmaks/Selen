@@ -3,8 +3,17 @@ package ru.botota.selenium;
 import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.security.UserAndPassword;
 import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.quartz.SchedulerException;
+import org.telegram.telegrambots.ApiContextInitializer;
+import org.telegram.telegrambots.TelegramBotsApi;
+import org.telegram.telegrambots.bots.TelegramLongPollingBot;
+import org.telegram.telegrambots.exceptions.TelegramApiRequestException;
+import org.telegram.telegrambots.generics.LongPollingBot;
+import ru.botota.selenium.service.WardenService;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
@@ -16,6 +25,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,6 +43,33 @@ public class Main {
 
 
     public static void main(String[] args) {
+
+        ApiContextInitializer.init();
+
+        TelegramBotsApi botsApi = new TelegramBotsApi();
+        Bot bot = new Bot();
+        try {
+            botsApi.registerBot(bot);
+        } catch (TelegramApiRequestException e) {
+            e.printStackTrace();
+        }
+
+        WardenService wardenService = new WardenService(
+                //"http://classic.dzzzr.ru/mega-vlg/",
+                "https://time100.ru/",
+                "gamelogin",
+                "gamepass",
+                bot
+        );
+
+        Thread schedulerThread = new Thread(wardenService);
+        schedulerThread.start();
+
+
+
+
+
+/*
         // Создаем экземпляр WebDriver
         // Следует отметить что скрипт работает с интерфейсом,
         // а не с реализацией.
@@ -40,7 +77,7 @@ public class Main {
 
         WebDriver driver = new FirefoxDriver();
 
-/*
+*//*
         //AUTH __________________
         driver.get("http://classic.dzzzr.ru/mega-vlg/");
         driver.findElement(By.name("login")).sendKeys(LOGIN);;
@@ -52,10 +89,12 @@ public class Main {
                 return d.findElement(By.className("grayBox")).getText().contains(LOGIN);
             }
         });
-        //__________________________*/
+        //__________________________*//*
 
-        driver.get("http://dzrcc.tk/test/6_3.html");
+        //driver.get("http://dzrcc.tk/test/a/2.html");
+        driver.get("http://abc:121212@vle.pe.hu/mega");
         driver.manage().window().maximize();
+
 
         try {
             driver.findElement(By.name("spoilerCode"));
@@ -110,34 +149,32 @@ public class Main {
 
         // SCREENSHOT
         ((JavascriptExecutor)driver).executeScript("window.scrollTo(0,0)", "");
-        File scrFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        try {
-            FileUtils.copyFile(scrFile, new File("screenshot.png"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
 
-        /*BufferedImage fullImg = null;
+        BufferedImage fullImg = null;
         try {
             fullImg = ImageIO.read(screenshot);
 
 
-            WebElement ele = driver.findElement(By.name("codeform"));
+            WebElement ele = driver.findElement(By.className("zad"));
+            WebElement msg = driver.findElement(By.className("sysmsg"));
             Point point = ele.getLocation();
-
+            int posY = msg.getLocation().getY() + msg.getSize().getHeight();
+            int dop = ele.getLocation().getY()-posY;
             int eleWidth = ele.getSize().getWidth();
             int eleHeight = ele.getSize().getHeight();
             System.out.println(String.format("width %s, height %s, X %s, Y %s", eleWidth, eleHeight, point.getX(), point.getY()));
 
-            BufferedImage eleScreenshot = fullImg.getSubimage(0, 100, 200, 100);
+            BufferedImage eleScreenshot = fullImg.getSubimage(point.getX(), posY, eleWidth, eleHeight+dop);
             ImageIO.write(eleScreenshot, "png", screenshot);
 
             FileUtils.copyFile(screenshot, new File("screenshot.png"));
         } catch (IOException e) {
             e.printStackTrace();
-        }*/
+        }
 
 
-        driver.quit();
+
+        driver.quit();*/
     }
 }
